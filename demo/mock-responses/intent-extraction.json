@@ -1,0 +1,68 @@
+[
+  {
+    "moduleId": "abc123_sample_cbl_0",
+    "filePath": "sample.cbl",
+    "functionName": "CALCULATE-LOAN-DETAILS",
+    "intent": "Calculates compound interest for variable-rate loans with grace period handling and late fee assessment",
+    "confidence": 0.85,
+    "requiresHumanReview": false,
+    "rawCode": "       CALCULATE-LOAN-DETAILS.\n           PERFORM CALCULATE-MONTHLY-INTEREST\n           PERFORM CALCULATE-GRACE-PERIOD\n           PERFORM CHECK-LATE-FEE\n           PERFORM CALCULATE-TOTAL-INTEREST.",
+    "language": "cbl",
+    "domainHints": ["financial", "loan-processing", "interest-calculation"]
+  },
+  {
+    "moduleId": "abc123_sample_cbl_1",
+    "filePath": "sample.cbl",
+    "functionName": "CALCULATE-MONTHLY-INTEREST",
+    "intent": "Computes monthly payment amount based on principal, interest rate, and loan term using compound interest formula",
+    "confidence": 0.92,
+    "requiresHumanReview": false,
+    "rawCode": "       CALCULATE-MONTHLY-INTEREST.\n           COMPUTE WS-MONTHLY-RATE = \n               INTEREST-RATE / 12\n           COMPUTE MONTHLY-PAYMENT = \n               PRINCIPAL-AMOUNT * WS-MONTHLY-RATE / \n               (1 - (1 + WS-MONTHLY-RATE) ** (-LOAN-TERM-MONTHS)).",
+    "language": "cbl",
+    "domainHints": ["financial", "mathematics", "payment-calculation"]
+  },
+  {
+    "moduleId": "abc123_sample_cbl_2",
+    "filePath": "sample.cbl",
+    "functionName": "CALCULATE-GRACE-PERIOD",
+    "intent": "Validates and limits grace period to maximum of 30 days for late fee calculations",
+    "confidence": 0.78,
+    "requiresHumanReview": true,
+    "rawCode": "       CALCULATE-GRACE-PERIOD.\n           MOVE GRACE-PERIOD-DAYS TO WS-DAYS-GRACE\n           IF WS-DAYS-GRACE > 30\n               MOVE 30 TO WS-DAYS-GRACE.",
+    "language": "cbl",
+    "domainHints": ["financial", "business-rules", "grace-period"]
+  },
+  {
+    "moduleId": "abc123_sample_cbl_3",
+    "filePath": "sample.cbl",
+    "functionName": "CHECK-LATE-FEE",
+    "intent": "Determines if late fees should be applied based on days since loan start and grace period",
+    "confidence": 0.73,
+    "requiresHumanReview": true,
+    "rawCode": "       CHECK-LATE-FEE.\n           PERFORM CALCULATE-DAYS-SINCE-START\n           IF WS-DAYS-SINCE-START > WS-DAYS-GRACE\n               MOVE \"Y\" TO LATE-FEE-APPLIED\n               PERFORM CALCULATE-LATE-FEE\n           ELSE\n               MOVE \"N\" TO LATE-FEE-APPLIED.",
+    "language": "cbl",
+    "domainHints": ["financial", "fee-calculation", "business-logic"]
+  },
+  {
+    "moduleId": "abc123_sample_cbl_4",
+    "filePath": "sample.cbl",
+    "functionName": "CALCULATE-LATE-FEE",
+    "intent": "Calculates late fee amount as 5% of principal when applicable",
+    "confidence": 0.89,
+    "requiresHumanReview": false,
+    "rawCode": "       CALCULATE-LATE-FEE.\n           COMPUTE WS-LATE-FEE-AMOUNT = \n               PRINCIPAL-AMOUNT * WS-LATE-FEE-RATE.",
+    "language": "cbl",
+    "domainHints": ["financial", "fee-calculation", "penalty"]
+  },
+  {
+    "moduleId": "abc123_sample_cbl_5",
+    "filePath": "sample.cbl",
+    "functionName": "DISPLAY-RESULTS",
+    "intent": "Displays comprehensive loan processing results including all calculated values and status indicators",
+    "confidence": 0.68,
+    "requiresHumanReview": true,
+    "rawCode": "       DISPLAY-RESULTS.\n           DISPLAY \"LOAN PROCESSING RESULTS:\"\n           DISPLAY \"LOAN ID: \" LOAN-ID\n           DISPLAY \"BORROWER: \" BORROWER-NAME\n           DISPLAY \"PRINCIPAL: $\" PRINCIPAL-AMOUNT\n           DISPLAY \"MONTHLY PAYMENT: $\" MONTHLY-PAYMENT\n           DISPLAY \"TOTAL INTEREST: $\" TOTAL-INTEREST\n           DISPLAY \"LATE FEE APPLIED: \" LATE-FEE-APPLIED\n           IF LATE-FEE-APPLIED = \"Y\"\n               DISPLAY \"LATE FEE AMOUNT: $\" WS-LATE-FEE-AMOUNT\n           DISPLAY \"LOAN STATUS: \" LOAN-STATUS\n           DISPLAY \"----------------------------------------\".",
+    "language": "cbl",
+    "domainHints": ["user-interface", "reporting", "data-display"]
+  }
+]
