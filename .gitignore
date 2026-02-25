@@ -2,23 +2,19 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+/.pnpm
+.pnpm-store
 
 # testing
-/coverage
+/coverage/
 
 # next.js
-/.next/
+.next/
 /out/
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -39,3 +35,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# demo and windsurf (local development only)
+demo/
+.windsurf/
