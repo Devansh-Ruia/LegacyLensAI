@@ -87,6 +87,11 @@ async function fetchGitHubFiles(repoUrl: string): Promise<{ filePath: string; co
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('ENV CHECK', {
+      searchEndpoint: process.env.AZURE_SEARCH_ENDPOINT,
+      storageConn: process.env.AZURE_STORAGE_CONNECTION_STRING?.slice(0, 30),
+      githubToken: !!process.env.GITHUB_TOKEN,
+    });
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const repoUrl = formData.get('repoUrl') as string | null;
