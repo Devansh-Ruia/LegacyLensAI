@@ -334,6 +334,7 @@ export default function RefactorPage() {
                 <p className="text-lg">Select a refactored module to view details</p>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
