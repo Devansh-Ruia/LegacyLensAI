@@ -75,7 +75,7 @@ ${moduleIntent.rawCode}`;
 
       const userPrompt = `Refactor this ${moduleIntent.language} code to modern ${targetLanguage}:`;
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/azure-openai-proxy`, {
+      const response = await fetch('/api/azure-openai-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

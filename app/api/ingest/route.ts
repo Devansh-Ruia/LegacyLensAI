@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     await saveJob(jobId, job);
     
     // Kick off analysis asynchronously
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/analyze`, {
+    fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobId })

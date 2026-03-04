@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       });
       
       // Trigger roadmap generation asynchronously
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/roadmap`, {
+      fetch('/api/roadmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId })
