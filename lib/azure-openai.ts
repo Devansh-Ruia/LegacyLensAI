@@ -6,6 +6,8 @@ const BASE_DELAY_MS = 1000;
 
 function getOpenAIClient(): OpenAI {
   const githubToken = process.env.GITHUB_TOKEN;
+  console.log('GITHUB_TOKEN present:', !!githubToken);
+  console.log('TOKEN length:', githubToken?.length);
 
   if (!githubToken) {
     throw new Error('Missing required GITHUB_TOKEN environment variable');
