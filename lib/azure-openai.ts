@@ -5,19 +5,15 @@ const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 
 function getOpenAIClient(): OpenAI {
-  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-  const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME;
+  const githubToken = process.env.GITHUB_TOKEN;
 
-  if (!endpoint || !apiKey || !deploymentName) {
-    throw new Error('Missing required Azure OpenAI environment variables');
+  if (!githubToken) {
+    throw new Error('Missing required GITHUB_TOKEN environment variable');
   }
 
   return new OpenAI({
-    baseURL: endpoint,
-    apiKey: apiKey,
-    defaultQuery: { 'api-version': '2024-02-15-preview' },
-    defaultHeaders: { 'api-key': apiKey }
+    baseURL: 'https://models.inference.ai.azure.com',
+    apiKey: githubToken
   });
 }
 
@@ -47,11 +43,10 @@ export async function callGPT4o(
   userPrompt: string
 ): Promise<string> {
   const client = getOpenAIClient();
-  const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME!;
 
   return retryWithBackoff(async () => {
     const response = await client.chat.completions.create({
-      model: deploymentName,
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -61,7 +56,7 @@ export async function callGPT4o(
     });
 
     if (!response.choices || response.choices.length === 0) {
-      throw new Error('No response from Azure OpenAI');
+      throw new Error('No response from GitHub Models');
     }
 
     return response.choices[0].message?.content || '';
