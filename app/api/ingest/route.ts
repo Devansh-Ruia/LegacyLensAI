@@ -102,16 +102,28 @@ export async function POST(request: NextRequest) {
     let files: { filePath: string; content: string; language: string }[] = [];
     
     if (file) {
-      // Handle file upload (ZIP)
-      if (!file.name.endsWith('.zip')) {
+      // Handle file upload (ZIP or individual source file)
+      const buffer = await file.arrayBuffer();
+      
+      if (file.name.endsWith('.zip')) {
+        // Handle ZIP archive
+        files = await extractFromZip(buffer);
+      } else if (SUPPORTED_EXTENSIONS.some(ext => file.name.endsWith(ext))) {
+        // Handle individual source file
+        const content = new TextDecoder().decode(buffer);
+        const language = file.name.split('.').pop() || '';
+        
+        files = [{
+          filePath: file.name,
+          content,
+          language
+        }];
+      } else {
         return NextResponse.json(
-          { error: 'Uploaded file must be a ZIP archive' },
+          { error: 'Uploaded file must be a ZIP archive or a supported source file (.cbl, .cob, .php, .py, .java, .js, .ts, .cs, .vb)' },
           { status: 400 }
         );
       }
-      
-      const buffer = await file.arrayBuffer();
-      files = await extractFromZip(buffer);
     } else if (repoUrl) {
       // Handle GitHub repository URL
       files = await fetchGitHubFiles(repoUrl);
