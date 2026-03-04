@@ -169,6 +169,7 @@ export default function RefactorPage() {
                       onChange={(e) => handleRefactor(moduleId, e.target.value)}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-blue-500"
                       disabled={isRefactoring}
+                      aria-label="Target programming language"
                     >
                       <option value="">Select Language</option>
                       <option value="python">Python</option>
@@ -189,7 +190,7 @@ export default function RefactorPage() {
                       <>
                         <svg className="animate-spin -ml-2 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12v8m0-4-4h4m4 0v12M4 4-4h4m4 0z"></path>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Refactoring...
                       </>
@@ -236,7 +237,7 @@ export default function RefactorPage() {
                   ))}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -334,7 +335,6 @@ export default function RefactorPage() {
                 <p className="text-lg">Select a refactored module to view details</p>
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>
