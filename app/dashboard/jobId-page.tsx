@@ -234,6 +234,7 @@ export default function JobStatusPage() {
                 </ul>
               </div>
             </div>
+          </div>
         </div>
       </div>
     </div>

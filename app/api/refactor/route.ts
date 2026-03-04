@@ -109,14 +109,16 @@ ${moduleIntent.rawCode}`;
       // Generate test scaffold
       let testScaffold: string;
       try {
-        testScaffold = await generateTestScaffold({
+        const tempModule: RefactoredModule = {
           moduleId,
           originalCode: moduleIntent.rawCode,
           refactoredCode,
           targetLanguage,
+          testScaffold: '', // Temporary empty string
           intentUsedAsGuardrail: moduleIntent.intent,
           guardrailMode: true
-        });
+        };
+        testScaffold = await generateTestScaffold(tempModule);
       } catch (error: any) {
         console.error('Test scaffold generation failed:', error);
         testScaffold = `# Test scaffold generation failed\n# Error: ${error.message}\n# TODO: Generate tests manually`;
