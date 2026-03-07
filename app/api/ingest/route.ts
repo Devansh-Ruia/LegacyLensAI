@@ -165,7 +165,8 @@ export async function POST(request: NextRequest) {
     await saveJob(jobId, job);
     
     // Kick off analysis asynchronously
-    fetch('/api/analyze', {
+    const baseUrl = new URL(request.url).origin;
+    fetch(`${baseUrl}/api/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobId })
