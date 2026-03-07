@@ -40,7 +40,7 @@ export async function indexModule(module: ModuleIntent): Promise<void> {
   
   const document: SearchDocument = {
     moduleId: module.moduleId,
-    jobId: module.moduleId.split('_')[0], // Extract jobId from moduleId
+    jobId: module.moduleId.slice(0, 10), // Extract jobId from first 10 characters of moduleId
     filePath: module.filePath,
     language: module.language,
     rawCode: module.rawCode,

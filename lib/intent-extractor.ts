@@ -2,6 +2,10 @@ import { callGPT4oJSON } from './azure-openai';
 import { updateJobStatus } from './blob-storage';
 import { ModuleIntent } from '@/types';
 
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 interface IntentExtractionResult {
   intent: string;
   confidence: number;
@@ -65,12 +69,12 @@ ${chunk.rawCode}`;
 
 export async function extractIntentsInBatches(
   chunks: ModuleIntent[],
-  batchSize: number = 5
+  batchSize: number = 2
 ): Promise<ModuleIntent[]> {
   const processedChunks: ModuleIntent[] = [];
   
   // Extract jobId from first chunk to update job status
-  const jobId = chunks[0]?.moduleId?.split('_')[0];
+  const jobId = chunks[0]?.moduleId?.slice(0, 10);
   
   for (let i = 0; i < chunks.length; i += batchSize) {
     const batch = chunks.slice(i, i + batchSize);
@@ -93,7 +97,7 @@ export async function extractIntentsInBatches(
       console.log(`Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunks.length / batchSize)} - ${processedChunks.length}/${chunks.length} modules`);
       
       // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sleep(1000);
       
     } catch (error: any) {
       console.error(`Batch processing failed at index ${i}:`, error);
