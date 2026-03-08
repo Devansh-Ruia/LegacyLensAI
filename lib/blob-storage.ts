@@ -1,6 +1,5 @@
 import { BlobServiceClient, BlockBlobClient } from '@azure/storage-blob';
 import { AnalysisJob, JobStatus, ModuleIntent } from '@/types';
-import { nanoid } from 'nanoid';
 
 function getBlobServiceClient(): BlobServiceClient {
   const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
@@ -125,10 +124,10 @@ export async function listJobs(): Promise<string[]> {
 export function chunkFile(
   filePath: string,
   content: string,
-  language: string
+  language: string,
+  jobId: string
 ): ModuleIntent[] {
   const chunks: ModuleIntent[] = [];
-  const jobId = nanoid(10);
   
   // Split by function/class boundaries for JS/TS/Python/Java/PHP
   if (['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'php'].includes(language)) {

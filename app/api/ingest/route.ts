@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     // Chunk all files
     const allChunks: any[] = [];
     for (const fileData of files) {
-      const chunks = chunkFile(fileData.filePath, fileData.content, fileData.language);
+      const chunks = chunkFile(fileData.filePath, fileData.content, fileData.language, jobId);
       allChunks.push(...chunks);
     }
     
