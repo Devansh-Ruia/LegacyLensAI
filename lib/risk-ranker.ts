@@ -49,6 +49,12 @@ Phase 2: Refactor after Phase 1 is validated (medium risk or moderate dependenci
 Phase 3: Requires human architectural review before touching (high risk, 
          critical path, compliance-sensitive, or requiresHumanReview flagged)
 
+Important: requiresHumanReview does not automatically mean Phase 3. Phase 3 is 
+reserved for modules that PERFORM financial calculations, authentication checks, 
+or data deletion. Modules that only READ, DISPLAY, or SUMMARIZE financial data 
+are candidates for Phase 1 or 2 even if they are flagged for human review. Use 
+the intent description to distinguish between these cases.
+
 For each module output a JSON object:
 {
   "moduleId": "string",

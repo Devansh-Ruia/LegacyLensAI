@@ -223,8 +223,11 @@ export function chunkFile(
       chunks.push(createChunk(jobId, filePath, language, chunkContent, chunks.length));
     }
   }
-  
-  return chunks;
+
+  // Filter out chunks too small to extract meaningful intent (fewer than 3 lines)
+  return chunks.filter(
+    (chunk) => chunk.rawCode.trim().split('\n').length >= 3
+  );
 }
 
 function createChunk(
