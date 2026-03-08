@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    if (job.status === 'complete') {
+      return NextResponse.json({ message: 'Job already complete' }, { status: 200 });
+    }
+    
     // Check if job is in correct state for roadmap generation
     if (job.status !== 'roadmapping') {
       return NextResponse.json(

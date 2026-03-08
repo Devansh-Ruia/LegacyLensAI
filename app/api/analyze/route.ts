@@ -15,22 +15,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get existing job
-    const job = await getJob(jobId);
-    if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      );
+    const existingJob = await getJob(jobId);
+    if (!existingJob) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+    if (existingJob.status !== 'ingesting') {
+      return NextResponse.json({ message: 'Job already processing or complete' }, { status: 200 });
     }
     
-    // Check if job is in correct state for analysis
-    if (job.status !== 'ingesting') {
-      return NextResponse.json(
-        { error: `Job is in ${job.status} state, cannot analyze` },
-        { status: 400 }
-      );
-    }
+    const job = existingJob;
     
     // Update job status to analyzing
     await updateJobStatus(jobId, 'analyzing');
