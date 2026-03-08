@@ -3,6 +3,7 @@ import { checkSemanticDrift } from '@/lib/intent-extractor';
 import { generateTestScaffold } from '@/lib/test-scaffolder';
 import { updateJobStatus, getJob } from '@/lib/blob-storage';
 import { searchRelatedModules } from '@/lib/azure-search';
+import { callGPT4o } from '@/lib/azure-openai';
 import { RefactoredModule } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -75,22 +76,7 @@ ${moduleIntent.rawCode}`;
 
       const userPrompt = `Refactor this ${moduleIntent.language} code to modern ${targetLanguage}:`;
 
-      const response = await fetch('/api/azure-openai-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemPrompt,
-          userPrompt,
-          temperature: 0.1,
-          maxTokens: 4000
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to call OpenAI: ${response.statusText}`);
-      }
-
-      const { refactoredCode } = await response.json();
+      const refactoredCode = await callGPT4o(systemPrompt, userPrompt);
       
       // Check for semantic drift
       let driftWarning: string | undefined;
