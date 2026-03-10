@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 
 interface RefactoredModule {
   moduleId: string;
@@ -16,15 +16,20 @@ interface RefactoredModule {
 export default function RefactorPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [job, setJob] = useState<any>(null);
   const [refactoredModules, setRefactoredModules] = useState<RefactoredModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<RefactoredModule | null>(null);
   const [isRefactoring, setIsRefactoring] = useState(false);
+  const [showTests, setShowTests] = useState(false);
+  const [repoName, setRepoName] = useState<string>('');
 
   const moduleId = searchParams.get('module');
+
+  useEffect(() => {
+    document.title = 'Code Refactoring · LegacyLens';
+  }, []);
 
   useEffect(() => {
     if (!params.jobId) return;
@@ -36,6 +41,7 @@ export default function RefactorPage() {
           const jobData = await response.json();
           setJob(jobData);
           setRefactoredModules(jobData.refactoredModules || []);
+          setRepoName(typeof jobData.repoName === 'string' ? jobData.repoName : '');
           setError(null);
         } else {
           const errorData = await response.json();
@@ -50,6 +56,12 @@ export default function RefactorPage() {
 
     fetchJobData();
   }, [params.jobId]);
+
+  useEffect(() => {
+    if (!moduleId) return;
+    const match = refactoredModules.find((m) => m.moduleId === moduleId);
+    if (match) setSelectedModule(match);
+  }, [moduleId, refactoredModules]);
 
   const handleRefactor = async (moduleId: string, targetLanguage: string) => {
     if (!moduleId || !targetLanguage) return;
@@ -82,96 +94,120 @@ export default function RefactorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="text-gray-600 text-6xl font-bold mb-4">⏳</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Refactor View</h1>
-        </div>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[960px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <div className="text-[0.9375rem] text-[var(--text-secondary)]">Loading refactor view.</div>
+          </div>
+        </main>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="mb-8">
-            <div className="text-red-600 text-6xl font-bold mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Refactor Error</h1>
-            <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[960px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <h1 className="text-[2rem] font-normal">Code Refactoring</h1>
+            <p className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+              className="mt-8 h-12 w-full bg-[var(--accent)] px-6 text-[0.9375rem] font-medium text-[#0e0e0e] transition-opacity duration-150 hover:opacity-85"
             >
               Try Again
             </button>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
-  const targetLanguage = selectedModule?.targetLanguage || 'python';
+  const selected = selectedModule || (refactoredModules.length > 0 ? refactoredModules[0] : null);
+
+  const sourceLanguageLabel = useMemo(() => {
+    const intents = Array.isArray(job?.intents) ? job.intents : [];
+    const match = intents.find((i: any) => i?.moduleId === selected?.moduleId);
+    const lang = typeof match?.language === 'string' ? match.language : '';
+    const labels: Record<string, string> = {
+      cbl: 'COBOL',
+      cob: 'COBOL',
+      java: 'Java',
+      py: 'Python',
+      php: 'PHP',
+      js: 'JavaScript',
+      ts: 'TypeScript',
+      cs: 'C#',
+      vb: 'VB.NET',
+    };
+    return labels[lang] || (lang ? lang.toUpperCase() : 'Legacy');
+  }, [job?.intents, selected?.moduleId]);
+
+  const downloadText = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-white">LegacyLens</h1>
-              <p className="ml-4 text-gray-400 text-sm">AI-Powered Legacy Code Modernization</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                ← Status
-              </button>
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}/intent`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Intent
-              </button>
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}/roadmap`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Roadmap
-              </button>
-              <div className="text-gray-300">
-                <span className="font-medium">Job ID:</span> {params.jobId}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <div className="flex min-h-screen">
-        <div className="flex-1 bg-gray-900 p-8">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-xl font-semibold text-white mb-6">Code Refactoring</h2>
-            
-            {moduleId && !selectedModule && (
-              <div className="bg-blue-900 border border-blue-700 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-medium text-white mb-4">
-                  Refactor Module: {moduleId}
-                </h3>
-                <div className="space-y-4">
+        <aside className="hidden h-screen w-[220px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] px-6 py-8 lg:sticky lg:top-0 lg:flex lg:flex-col">
+          <div className="text-[1rem] font-semibold uppercase tracking-[0.08em]">LegacyLens</div>
+          <div className="mt-3 font-mono text-[0.875rem] text-[var(--text-muted)]">{String(params.jobId)}</div>
+
+          <nav className="mt-10 space-y-3 text-[0.9375rem]">
+            <a href={`/dashboard/${params.jobId}/intent`} className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150">
+              Intent
+            </a>
+            <a href={`/dashboard/${params.jobId}/roadmap`} className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150">
+              Roadmap
+            </a>
+            <a href={`/dashboard/${params.jobId}/refactor`} className="block text-[var(--accent)]">
+              Refactor
+            </a>
+          </nav>
+
+          <div className="mt-auto pt-10 text-[0.875rem] text-[var(--text-muted)]">
+            <div className="truncate">{repoName || 'Repository'}</div>
+            <div>{Array.isArray(job?.intents) ? job.intents.length : 0} modules</div>
+          </div>
+        </aside>
+
+        <main className="flex-1 px-6 py-10 sm:px-10">
+          <div className="mx-auto w-full max-w-[1280px]">
+            <div className="mb-10 flex items-end justify-between gap-6">
+              <h2 className="text-[2rem] font-normal">Code Refactoring</h2>
+              <div className="font-mono text-[0.875rem] text-[var(--text-muted)] lg:hidden">{String(params.jobId)}</div>
+            </div>
+
+            {moduleId ? (
+              <div className="mb-8 border border-[var(--border)] bg-[var(--surface)] p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="font-mono text-[0.9375rem] text-[var(--text-secondary)]">{moduleId}</div>
+                  <div className="text-[0.875rem] text-[var(--text-muted)]">
+                    {isRefactoring ? 'Refactoring…' : 'Ready'}
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Target Language
+                    <label className="block text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                      Target language
                     </label>
                     <select
-                      value={targetLanguage}
+                      defaultValue="python"
                       onChange={(e) => handleRefactor(moduleId, e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-blue-500"
+                      className="mt-2 w-full border border-[var(--border)] bg-transparent px-3 py-3 text-[0.9375rem] text-[var(--text-primary)] focus:outline-none"
                       disabled={isRefactoring}
                       aria-label="Target programming language"
                     >
-                      <option value="">Select Language</option>
                       <option value="python">Python</option>
                       <option value="java">Java</option>
                       <option value="javascript">JavaScript</option>
@@ -182,161 +218,143 @@ export default function RefactorPage() {
                   </div>
 
                   <button
-                    onClick={() => handleRefactor(moduleId, targetLanguage)}
-                    disabled={!targetLanguage || isRefactoring}
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={() => handleRefactor(moduleId, selected?.targetLanguage || 'python')}
+                    disabled={isRefactoring}
+                    className="h-12 w-full bg-[var(--accent)] px-6 text-[0.9375rem] font-medium text-[#0e0e0e] transition-opacity duration-150 hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    aria-label="Start refactoring"
                   >
-                    {isRefactoring ? (
-                      <>
-                        <svg className="animate-spin -ml-2 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Refactoring...
-                      </>
-                    ) : (
-                      'Refactor Module'
-                    )}
+                    Start
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {refactoredModules.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-white mb-4">Refactored Modules</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {refactoredModules.map((module) => (
-                    <div
-                      key={module.moduleId}
-                      onClick={() => setSelectedModule(module)}
-                      className={`bg-gray-800 border border-gray-700 rounded-lg p-4 cursor-pointer transition-colors ${
-                        selectedModule?.moduleId === module.moduleId ? 'border-blue-500' : 'hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-lg font-medium text-white">
-                          {module.moduleId}
-                        </h4>
-                        <div className="flex items-center space-x-2">
-                          <span className="px-2 py-1 bg-green-600 rounded text-xs font-medium text-white">
-                            {module.targetLanguage.toUpperCase()}
-                          </span>
-                          {module.guardrailMode && (
-                            <span className="text-green-600 text-sm">✓ Guardrail</span>
-                          )}
+            {refactoredModules.length > 0 ? (
+              <div className="mb-8">
+                <div className="mb-4 text-[0.9375rem] text-[var(--text-secondary)]">Refactored modules</div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {refactoredModules
+                    .slice()
+                    .sort((a, b) => a.moduleId.localeCompare(b.moduleId))
+                    .map((m) => (
+                      <button
+                        key={m.moduleId}
+                        type="button"
+                        onClick={() => {
+                          setSelectedModule(m);
+                          setShowTests(false);
+                        }}
+                        className={`border p-6 text-left transition-opacity duration-150 hover:opacity-85 ${
+                          selected?.moduleId === m.moduleId ? 'border-[var(--accent)]' : 'border-[var(--border)]'
+                        }`}
+                        aria-label={`Select ${m.moduleId}`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="font-mono text-[0.875rem] text-[var(--text-secondary)]">{m.moduleId}</div>
+                          <div className="text-right text-[0.875rem] text-[var(--text-muted)]">
+                            {m.targetLanguage.toUpperCase()}
+                            {m.guardrailMode ? (
+                              <span className="ml-3 text-[var(--success)]">✓ Guardrail Active</span>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="text-sm text-gray-300">
-                        <p className="line-clamp-2 mb-3">
-                          Intent: {module.intentUsedAsGuardrail}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-gray-800 p-8">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-medium text-white mb-4">Module Details</h3>
-            
-            {selectedModule ? (
-              <div className="space-y-4">
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-3">
-                    {selectedModule.moduleId}
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-300 mb-2">Target Language</h5>
-                      <div className="flex items-center space-x-2">
-                        <div className="px-2 py-1 bg-green-600 rounded text-xs font-medium text-white">
-                          {selectedModule.targetLanguage.toUpperCase()}
+                        <div className="mt-3 line-clamp-2 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)] italic">
+                          {m.intentUsedAsGuardrail}
                         </div>
-                        {selectedModule.guardrailMode && (
-                          <span className="text-green-600 text-sm">Intent Guardrail Active</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-300 mb-2">Business Intent Used</h5>
-                      <p className="text-sm text-gray-100">{selectedModule.intentUsedAsGuardrail}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h5 className="text-white font-medium mb-3">Original Code</h5>
-                  <pre className="text-xs text-gray-300 bg-gray-900 p-3 rounded overflow-x-auto max-h-48">
-                    <code>{selectedModule.originalCode}</code>
-                  </pre>
-                </div>
-
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h5 className="text-white font-medium mb-3">Refactored Code</h5>
-                  <pre className="text-xs text-gray-100 bg-gray-900 p-3 rounded overflow-x-auto max-h-48">
-                    <code>{selectedModule.refactoredCode}</code>
-                  </pre>
-                </div>
-
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h5 className="text-white font-medium mb-3">Test Scaffold</h5>
-                  <pre className="text-xs text-gray-100 bg-gray-900 p-3 rounded overflow-x-auto max-h-48">
-                    <code>{selectedModule.testScaffold}</code>
-                  </pre>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <button
-                    onClick={() => {
-                      const codeData = new Blob([selectedModule.refactoredCode], { type: 'text/plain' });
-                      const url = URL.createObjectURL(codeData);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${selectedModule.moduleId}_refactored.${selectedModule.targetLanguage}`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                  >
-                    Download Refactored Code
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const testData = new Blob([selectedModule.testScaffold], { type: 'text/plain' });
-                      const url = URL.createObjectURL(testData);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${selectedModule.moduleId}_test.py`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
-                  >
-                    Download Test Scaffold
-                  </button>
+                      </button>
+                    ))}
                 </div>
               </div>
             ) : (
-              <div className="text-center text-gray-400">
-                <div className="text-6xl mb-4">⚙️</div>
-                <p className="text-lg">Select a refactored module to view details</p>
+              <div className="border border-[var(--border)] bg-[var(--surface)] p-6 text-[0.9375rem] text-[var(--text-secondary)]">
+                No refactored modules yet.
               </div>
             )}
+
+            {selected ? (
+              <section>
+                <div className="flex flex-wrap items-baseline justify-between gap-4">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <div className="font-mono text-[0.9375rem] text-[var(--text-primary)]">{selected.moduleId}</div>
+                    <div className="text-[0.9375rem] text-[var(--text-secondary)]">
+                      {sourceLanguageLabel} → {selected.targetLanguage.charAt(0).toUpperCase() + selected.targetLanguage.slice(1)}
+                    </div>
+                    {selected.guardrailMode ? (
+                      <div className="text-[0.9375rem] text-[var(--success)]">✓ Guardrail Active</div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-2 text-[0.9375rem] text-[var(--text-secondary)] italic">
+                  {selected.intentUsedAsGuardrail}
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-0">
+                  <div className="order-2 border border-[var(--border)] bg-[var(--surface)] lg:order-1 lg:border-r-0">
+                    <div className="border-b border-[var(--border)] px-6 py-4 text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                      Original code
+                    </div>
+                    <pre className="max-h-[560px] overflow-auto p-6 font-mono text-[0.875rem] leading-[1.6] text-[var(--text-secondary)] [scrollbar-width:thin]">
+                      <code>{selected.originalCode}</code>
+                    </pre>
+                  </div>
+
+                  <div className="order-1 border border-[var(--border)] bg-[var(--surface)] lg:order-2">
+                    <div className="border-b border-[var(--border)] px-6 py-4 text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                      Refactored code
+                    </div>
+                    <pre className="max-h-[560px] overflow-auto p-6 font-mono text-[0.875rem] leading-[1.6] text-[var(--text-secondary)] [scrollbar-width:thin]">
+                      <code>{selected.refactoredCode}</code>
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-end gap-4 text-[0.9375rem]">
+                  <button
+                    type="button"
+                    onClick={() => downloadText(`${selected.moduleId}_refactored.txt`, selected.refactoredCode)}
+                    className="text-[var(--accent)] underline-offset-4 hover:underline transition-colors duration-150"
+                    aria-label="Download refactored code"
+                  >
+                    Download refactored code
+                  </button>
+                  <span className="text-[var(--text-muted)]">·</span>
+                  <button
+                    type="button"
+                    onClick={() => downloadText(`${selected.moduleId}_test.txt`, selected.testScaffold)}
+                    className="text-[var(--accent)] underline-offset-4 hover:underline transition-colors duration-150"
+                    aria-label="Download test scaffold"
+                  >
+                    Download test scaffold
+                  </button>
+                </div>
+
+                <div className="mt-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowTests((v) => !v)}
+                    className="text-[0.9375rem] text-[var(--accent)] underline-offset-4 hover:underline transition-colors duration-150"
+                    aria-label={showTests ? 'Hide test scaffold' : 'Show test scaffold'}
+                  >
+                    {showTests ? 'Hide test scaffold ↑' : 'Show test scaffold ↓'}
+                  </button>
+
+                  {showTests ? (
+                    <div className="mt-4 border border-[var(--border)] bg-[var(--surface)]">
+                      <div className="border-b border-[var(--border)] px-6 py-4 text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                        Test scaffold
+                      </div>
+                      <pre className="max-h-[420px] overflow-auto p-6 font-mono text-[0.875rem] leading-[1.6] text-[var(--text-secondary)] [scrollbar-width:thin]">
+                        <code>{selected.testScaffold}</code>
+                      </pre>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

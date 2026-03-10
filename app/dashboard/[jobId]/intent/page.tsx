@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 
 interface ModuleIntent {
   moduleId: string;
@@ -17,11 +17,16 @@ interface ModuleIntent {
 
 export default function IntentMapPage() {
   const params = useParams();
-  const router = useRouter();
   const [intents, setIntents] = useState<ModuleIntent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<ModuleIntent | null>(null);
+  const [activeLanguage, setActiveLanguage] = useState<string>('all');
+  const [repoName, setRepoName] = useState<string>('');
+
+  useEffect(() => {
+    document.title = 'Business Intent · LegacyLens';
+  }, []);
 
   useEffect(() => {
     if (!params.jobId) return;
@@ -32,6 +37,7 @@ export default function IntentMapPage() {
         if (response.ok) {
           const jobData = await response.json();
           setIntents(jobData.intents || []);
+          setRepoName(typeof jobData.repoName === 'string' ? jobData.repoName : '');
           setError(null);
         } else {
           const errorData = await response.json();
@@ -48,30 +54,9 @@ export default function IntentMapPage() {
   }, [params.jobId]);
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-green-600';
-    if (confidence >= 0.6) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 0.8) return 'High';
-    if (confidence >= 0.6) return 'Medium';
-    return 'Low';
-  };
-
-  const getLanguageColor = (language: string) => {
-    const colors: { [key: string]: string } = {
-      'cbl': 'bg-blue-600',
-      'cob': 'bg-blue-600',
-      'java': 'bg-green-600',
-      'py': 'bg-yellow-600',
-      'php': 'bg-purple-600',
-      'js': 'bg-orange-600',
-      'ts': 'bg-orange-600',
-      'cs': 'bg-red-600',
-      'vb': 'bg-indigo-600'
-    };
-    return colors[language] || 'bg-gray-600';
+    if (confidence >= 0.8) return 'text-[var(--success)]';
+    if (confidence >= 0.65) return 'text-[var(--warning)]';
+    return 'text-[var(--danger)]';
   };
 
   const getLanguageLabel = (language: string) => {
@@ -89,238 +74,195 @@ export default function IntentMapPage() {
     return labels[language] || language.toUpperCase();
   };
 
+  const languages = useMemo(() => {
+    const unique = new Set<string>();
+    for (const m of intents) unique.add(m.language);
+    return ['all', ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
+  }, [intents]);
+
+  const filteredIntents = useMemo(() => {
+    if (activeLanguage === 'all') return intents;
+    return intents.filter((m) => m.language === activeLanguage);
+  }, [activeLanguage, intents]);
+
+  const moduleCountLabel = useMemo(() => {
+    const count = intents.length;
+    return `${count} module${count === 1 ? '' : 's'}`;
+  }, [intents.length]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="text-gray-600 text-6xl font-bold mb-4">⏳</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Intent Map</h1>
-        </div>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[960px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <div className="text-[0.9375rem] text-[var(--text-secondary)]">Loading business intent.</div>
+          </div>
+        </main>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="mb-8">
-            <div className="text-red-600 text-6xl font-bold mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Intent Map Error</h1>
-            <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[960px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <h1 className="text-[2rem] font-normal">Business Intent</h1>
+            <p className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+              className="mt-8 h-12 w-full bg-[var(--accent)] px-6 text-[0.9375rem] font-medium text-[#0e0e0e] transition-opacity duration-150 hover:opacity-85"
             >
               Try Again
             </button>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-white">LegacyLens</h1>
-              <p className="ml-4 text-gray-400 text-sm">AI-Powered Legacy Code Modernization</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                ← Status
-              </button>
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}/roadmap`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Roadmap
-              </button>
-              <button
-                onClick={() => router.push(`/dashboard/${params.jobId}/refactor`)}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Refactor
-              </button>
-              <div className="text-gray-300">
-                <span className="font-medium">Job ID:</span> {params.jobId}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <div className="flex min-h-screen">
-        <div className="flex-1 bg-gray-900 p-8">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-xl font-semibold text-white mb-6">Business Intent Map</h2>
-            
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
-                <span>Showing {intents.length} modules</span>
-                <div className="flex items-center space-x-4">
-                  <span>Confidence:</span>
-                  <span className="text-green-600">High (≥0.8)</span>
-                  <span className="text-yellow-600">Medium (0.6-0.79)</span>
-                  <span className="text-red-600">Low (&lt;0.6)</span>
-                </div>
-              </div>
-            </div>
+        <aside className="hidden h-screen w-[220px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] px-6 py-8 lg:sticky lg:top-0 lg:flex lg:flex-col">
+          <div className="text-[1rem] font-semibold uppercase tracking-[0.08em]">LegacyLens</div>
+          <div className="mt-3 font-mono text-[0.875rem] text-[var(--text-muted)]">{String(params.jobId)}</div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {intents.map((intent) => (
-                <div
-                  key={intent.moduleId}
-                  onClick={() => setSelectedModule(intent)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className={`px-2 py-1 rounded text-xs font-medium text-white ${getLanguageColor(intent.language)}`}>
-                        {getLanguageLabel(intent.language)}
-                      </div>
-                      {intent.requiresHumanReview && (
-                        <span className="text-yellow-600 text-sm font-medium">⚠️ Review</span>
-                      )}
-                    </div>
-                    <div className={`text-sm font-medium ${getConfidenceColor(intent.confidence)}`}>
-                      {getConfidenceLabel(intent.confidence)}
-                    </div>
-                  </div>
+          <nav className="mt-10 space-y-3 text-[0.9375rem]">
+            <a href={`/dashboard/${params.jobId}/intent`} className="block text-[var(--accent)]">
+              Intent
+            </a>
+            <a href={`/dashboard/${params.jobId}/roadmap`} className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150">
+              Roadmap
+            </a>
+            <a href={`/dashboard/${params.jobId}/refactor`} className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150">
+              Refactor
+            </a>
+          </nav>
 
-                  <h3 className="text-lg font-medium text-white mb-3">
-                    {intent.functionName || intent.moduleId}
-                  </h3>
-
-                  <div className="text-sm text-gray-300 mb-4">
-                    <p className="line-clamp-3">{intent.intent}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>File:</span>
-                      <span className="font-mono">{intent.filePath}</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>Confidence:</span>
-                      <span className={`font-medium ${getConfidenceColor(intent.confidence)}`}>
-                        {(intent.confidence * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {intent.domainHints.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {intent.domainHints.map((hint, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-gray-700 text-xs text-gray-300 rounded"
-                        >
-                          {hint}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+          <div className="mt-auto pt-10 text-[0.875rem] text-[var(--text-muted)]">
+            <div className="truncate">{repoName || 'Repository'}</div>
+            <div>{moduleCountLabel}</div>
           </div>
-        </div>
+        </aside>
 
-        <div className="flex-1 bg-gray-800 p-8">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-medium text-white mb-4">Module Details</h3>
-            
-            {selectedModule ? (
-              <div className="space-y-4">
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="text-white font-medium mb-3">
-                    {selectedModule.functionName || selectedModule.moduleId}
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-300 mb-2">Business Intent</h5>
-                      <p className="text-sm text-gray-100">{selectedModule.intent}</p>
-                    </div>
+        <main className="flex-1 px-6 py-10 sm:px-10">
+          <div className="mx-auto w-full max-w-[1120px]">
+            <div className="mb-10 flex items-end justify-between gap-6">
+              <h2 className="text-[2rem] font-normal">Business Intent</h2>
+              <div className="font-mono text-[0.875rem] text-[var(--text-muted)] lg:hidden">{String(params.jobId)}</div>
+            </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Confidence</h5>
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-3 h-3 rounded-full ${getConfidenceColor(selectedModule.confidence)}`}></div>
-                          <span className={`text-sm font-medium ${getConfidenceColor(selectedModule.confidence)}`}>
-                            {(selectedModule.confidence * 100).toFixed(0)}%
-                          </span>
-                          <span className="text-sm text-gray-400">
-                            ({getConfidenceLabel(selectedModule.confidence)})
-                          </span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Language</h5>
-                        <div className={`px-3 py-1 rounded text-sm font-medium text-white ${getLanguageColor(selectedModule.language)}`}>
-                          {getLanguageLabel(selectedModule.language)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-300 mb-2">File Path</h5>
-                      <p className="text-sm text-gray-100 font-mono">{selectedModule.filePath}</p>
-                    </div>
-
-                    {selectedModule.domainHints.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-300 mb-2">Domain Hints</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedModule.domainHints.map((hint, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-gray-600 text-xs text-gray-200 rounded"
-                            >
-                              {hint}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedModule.requiresHumanReview && (
-                      <div className="mt-4 p-3 bg-yellow-900 border border-yellow-700 rounded-lg">
-                        <h5 className="text-yellow-100 font-medium mb-2">⚠️ Human Review Required</h5>
-                        <p className="text-yellow-200 text-sm">
-                          This module has been flagged for human review due to low confidence or complex business logic.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-6 text-center">
+            <div className="mb-8 flex flex-wrap gap-2">
+              {languages.map((lang) => {
+                const isActive = activeLanguage === lang;
+                const label = lang === 'all' ? 'All' : getLanguageLabel(lang);
+                return (
                   <button
-                    onClick={() => router.push(`/dashboard/${params.jobId}/refactor?module=${selectedModule.moduleId}`)}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700"
+                    key={lang}
+                    type="button"
+                    onClick={() => setActiveLanguage(lang)}
+                    className={`border px-3 py-2 text-[0.9375rem] transition-opacity duration-150 hover:opacity-85 ${
+                      isActive ? 'border-[var(--accent)]' : 'border-[var(--border)]'
+                    }`}
+                    aria-label={`Filter by ${label}`}
                   >
-                    Refactor Module →
+                    {label}
                   </button>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_420px]">
+              <section>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {filteredIntents.map((intent) => (
+                    <button
+                      key={intent.moduleId}
+                      type="button"
+                      onClick={() => setSelectedModule(intent)}
+                      className="w-full border border-[var(--border)] p-6 text-left transition-opacity duration-150 hover:opacity-85"
+                      aria-label={`Open ${intent.filePath}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span className="shrink-0 border border-[var(--border)] px-2 py-1 text-[0.75rem] uppercase tracking-[0.06em] text-[var(--text-secondary)]">
+                            {getLanguageLabel(intent.language)}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate font-mono text-[0.875rem] text-[var(--text-secondary)]">
+                              {intent.filePath}
+                            </div>
+                          </div>
+                        </div>
+                        <div className={`shrink-0 text-right font-mono text-[0.875rem] ${getConfidenceColor(intent.confidence)}`}>
+                          {(intent.confidence * 100).toFixed(0)}%
+                        </div>
+                      </div>
+
+                      <div className="mt-4 text-[0.9375rem] leading-[1.6] text-[var(--text-primary)]">
+                        {intent.intent}
+                      </div>
+
+                      {intent.requiresHumanReview ? (
+                        <div className="mt-4 text-[0.9375rem] text-[var(--warning)]">Human review required</div>
+                      ) : null}
+                    </button>
+                  ))}
                 </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-400">
-                <div className="text-6xl mb-4">📋</div>
-                <p className="text-lg">Select a module to view details</p>
-              </div>
-            )}
+              </section>
+
+              <aside className="border border-[var(--border)] bg-[var(--surface)]">
+                {selectedModule ? (
+                  <div className="h-full">
+                    <div className="border-b border-[var(--border)] p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="truncate font-mono text-[0.875rem] text-[var(--text-muted)]">
+                            {selectedModule.filePath}
+                          </div>
+                          <div className="mt-2 text-[1.125rem] font-medium">
+                            {selectedModule.functionName || selectedModule.moduleId}
+                          </div>
+                        </div>
+                        <div className={`shrink-0 font-mono text-[0.875rem] ${getConfidenceColor(selectedModule.confidence)}`}>
+                          {(selectedModule.confidence * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      {selectedModule.requiresHumanReview ? (
+                        <div className="mt-3 text-[0.9375rem] text-[var(--warning)]">Human review required</div>
+                      ) : null}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-0 lg:grid-rows-[1fr_1fr]">
+                      <div className="border-b border-[var(--border)] p-6">
+                        <div className="text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                          Business intent
+                        </div>
+                        <div className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-primary)]">
+                          {selectedModule.intent}
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="text-[0.75rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                          Raw code
+                        </div>
+                        <pre className="mt-3 max-h-[360px] overflow-auto bg-[var(--surface)] p-4 font-mono text-[0.875rem] leading-[1.6] text-[var(--text-secondary)] [scrollbar-width:thin]">
+                          <code>{selectedModule.rawCode}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
+                    Select a module to review its intent and raw code.
+                  </div>
+                )}
+              </aside>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

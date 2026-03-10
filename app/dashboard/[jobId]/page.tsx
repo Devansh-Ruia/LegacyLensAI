@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 interface JobStatus {
@@ -17,6 +17,10 @@ export default function JobStatusPage() {
   const router = useRouter();
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = 'Analyzing · LegacyLens';
+  }, []);
 
   useEffect(() => {
     if (!params.jobId) return;
@@ -57,18 +61,6 @@ export default function JobStatusPage() {
     }
   }, [job, params.jobId, router]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'text-yellow-600';
-      case 'ingesting': return 'text-blue-600';
-      case 'analyzing': return 'text-purple-600';
-      case 'roadmapping': return 'text-orange-600';
-      case 'complete': return 'text-green-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'Pending';
@@ -81,174 +73,117 @@ export default function JobStatusPage() {
     }
   };
 
-  const getProgressPercentage = () => {
-    if (!job || job.totalModules === 0) return 0;
-    return Math.round((job.processedModules / job.totalModules) * 100);
-  };
+  const pipeline = useMemo(() => ([
+    { key: 'ingesting', label: 'Ingesting' },
+    { key: 'analyzing', label: 'Extracting Intent' },
+    { key: 'roadmapping', label: 'Building Roadmap' },
+    { key: 'complete', label: 'Complete' },
+  ] as const), []);
+
+  const currentIndex = useMemo(() => {
+    if (!job) return 0;
+    const status = job.status;
+    if (status === 'pending') return 0;
+    const idx = pipeline.findIndex((s) => s.key === status);
+    return idx === -1 ? 0 : idx;
+  }, [job, pipeline]);
+
+  const elapsedLabel = useMemo(() => {
+    if (!job?.createdAt) return '';
+    const createdMs = new Date(job.createdAt).getTime();
+    if (Number.isNaN(createdMs)) return '';
+    const seconds = Math.max(0, Math.floor((Date.now() - createdMs) / 1000));
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    if (hours > 0) return `${hours}h ${minutes % 60}m elapsed`;
+    if (minutes > 0) return `${minutes}m ${seconds % 60}s elapsed`;
+    return `${seconds}s elapsed`;
+  }, [job?.createdAt]);
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="mb-8">
-            <div className="text-red-600 text-6xl font-bold mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Job Status Error</h1>
-            <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[640px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <div className="text-[1rem] font-semibold uppercase tracking-[0.08em]">LegacyLens</div>
+            <h1 className="mt-6 text-[2rem] font-normal">Status unavailable</h1>
+            <p className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+              className="mt-8 h-12 w-full bg-[var(--accent)] px-6 text-[0.9375rem] font-medium text-[#0e0e0e] transition-opacity duration-150 hover:opacity-85"
             >
               Try Again
             </button>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="text-gray-600 text-6xl font-bold mb-4">⏳</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Job Status</h1>
-        </div>
+      <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+        <main className="mx-auto flex min-h-screen w-full max-w-[640px] flex-col justify-center">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+            <div className="text-[1rem] font-semibold uppercase tracking-[0.08em]">LegacyLens</div>
+            <div className="mt-6 text-[0.9375rem] text-[var(--text-secondary)]">Loading job status.</div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-white">LegacyLens</h1>
-              <p className="ml-4 text-gray-400 text-sm">AI-Powered Legacy Code Modernization</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                ← Back to Upload
-              </button>
-              <div className="text-gray-300">
-                <span className="font-medium">Job ID:</span> {params.jobId}
+    <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
+      <main className="mx-auto flex min-h-screen w-full max-w-[640px] flex-col justify-center py-12">
+        <div className="mb-10 flex items-center justify-between">
+          <div className="text-[1rem] font-semibold uppercase tracking-[0.08em]">LegacyLens</div>
+          <div className="font-mono text-[0.875rem] text-[var(--text-muted)]">{String(params.jobId)}</div>
+        </div>
+
+        <div className="border border-[var(--border)] bg-[var(--surface)] p-6">
+          <div className="space-y-6">
+            {pipeline.map((step, idx) => {
+              const isComplete = idx < currentIndex || job.status === 'complete';
+              const isCurrent = idx === currentIndex && job.status !== 'complete';
+              const isOn = isComplete || isCurrent;
+
+              return (
+                <div key={step.key} className="relative">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[0.9375rem] text-[var(--text-primary)]">{step.label}</div>
+                    <div
+                      className={`h-2 w-2 border border-[var(--border)] ${
+                        isOn ? 'bg-[var(--accent)]' : 'bg-transparent'
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  {idx < pipeline.length - 1 ? (
+                    <div className="mt-4 h-px w-full bg-[var(--border)]" aria-hidden="true" />
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <div className="font-mono text-[2rem] leading-none text-[var(--text-primary)]">
+                {job.processedModules} / {job.totalModules}
               </div>
+              <div className="mt-2 text-[0.875rem] text-[var(--text-muted)]">modules</div>
+            </div>
+            <div className="sm:text-right">
+              <div className="text-[0.875rem] text-[var(--text-muted)]">
+                {elapsedLabel || new Date(job.createdAt).toLocaleString()}
+              </div>
+              <div className="mt-2 text-[0.875rem] text-[var(--text-secondary)]">{getStatusText(job.status)}</div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex min-h-screen">
-        {/* Left side - Status */}
-        <div className="flex-1 bg-gray-900 p-8">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-xl font-semibold text-white mb-6">Job Status</h2>
-            
-            {/* Status Display */}
-            <div className="mb-8">
-              <div className={`text-center p-6 rounded-lg border-2 ${getStatusColor(job?.status || 'pending')}`}>
-                <div className={`text-4xl font-bold mb-2 ${getStatusColor(job?.status || 'pending')}`}>
-                  {job?.status === 'complete' ? '✓' : '⏳'}
-                </div>
-                <div className={`text-lg font-medium mb-2 ${getStatusColor(job?.status || 'pending')}`}>
-                  {getStatusText(job?.status || 'pending')}
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-300 mb-2">
-                <span>Progress</span>
-                <span>{job?.processedModules || 0} / {job?.totalModules || 0}</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-3">
-                <div 
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Job Details */}
-            {job && (
-              <div className="space-y-4 text-sm text-gray-300">
-                <div className="flex justify-between">
-                  <span>Total Modules:</span>
-                  <span className="font-medium">{job.totalModules}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Processed:</span>
-                  <span className="font-medium">{job.processedModules}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Created:</span>
-                  <span className="font-medium">{new Date(job.createdAt).toLocaleString()}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation */}
-            {job?.status === 'complete' && (
-              <div className="mt-8 text-center">
-                <button
-                  onClick={() => router.push(`/dashboard/${params.jobId}/intent`)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700"
-                >
-                  View Intent Map →
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right side - Instructions */}
-        <div className="flex-1 bg-gray-800 p-8">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-medium text-white mb-4">What's Happening</h3>
-            <div className="space-y-3 text-sm text-gray-300">
-              <p>
-                {job?.status === 'ingesting' && 'Your code is being processed and chunked for analysis...'}
-                {job?.status === 'analyzing' && 'GPT-4o is extracting business intent from each module...'}
-                {job?.status === 'roadmapping' && 'Generating risk-based modernization roadmap...'}
-                {job?.status === 'complete' && 'Analysis complete! Redirecting to intent map...'}
-              </p>
-              <div className="mt-4 p-4 bg-gray-700 rounded-lg">
-                <h4 className="text-white font-medium mb-2">Next Steps</h4>
-                <ul className="space-y-2 text-gray-300">
-                  {job?.status === 'complete' && (
-                    <>
-                      <li>Review extracted intents and confidence scores</li>
-                      <li>Explore the 3-phase roadmap</li>
-                      <li>Refactor individual modules as needed</li>
-                      <li>Export complete modernization plan</li>
-                    </>
-                  )}
-                  {job?.status === 'analyzing' && (
-                    <>
-                      <li>Processing modules in batches of 5</li>
-                      <li>Indexing into Azure AI Search</li>
-                      <li>Building dependency relationships</li>
-                    </>
-                  )}
-                  {job?.status === 'roadmapping' && (
-                    <>
-                      <li>Analyzing business logic and interdependencies</li>
-                      <li>Assigning risk levels and effort estimates</li>
-                      <li>Generating phased modernization roadmap</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
