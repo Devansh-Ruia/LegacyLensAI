@@ -63,6 +63,25 @@ export default function RefactorPage() {
     if (match) setSelectedModule(match);
   }, [moduleId, refactoredModules]);
 
+  const sourceLanguageLabel = useMemo(() => {
+    const currentSelected = selectedModule || (refactoredModules.length > 0 ? refactoredModules[0] : null);
+    const intents = Array.isArray(job?.intents) ? job.intents : [];
+    const match = intents.find((i: any) => i?.moduleId === currentSelected?.moduleId);
+    const lang = typeof match?.language === 'string' ? match.language : '';
+    const labels: Record<string, string> = {
+      cbl: 'COBOL',
+      cob: 'COBOL',
+      java: 'Java',
+      py: 'Python',
+      php: 'PHP',
+      js: 'JavaScript',
+      ts: 'TypeScript',
+      cs: 'C#',
+      vb: 'VB.NET',
+    };
+    return labels[lang] || (lang ? lang.toUpperCase() : 'Legacy');
+  }, [selectedModule, refactoredModules, job?.intents]);
+
   const handleRefactor = async (moduleId: string, targetLanguage: string) => {
     if (!moduleId || !targetLanguage) return;
 
@@ -124,24 +143,6 @@ export default function RefactorPage() {
   }
 
   const selected = selectedModule || (refactoredModules.length > 0 ? refactoredModules[0] : null);
-
-  const sourceLanguageLabel = useMemo(() => {
-    const intents = Array.isArray(job?.intents) ? job.intents : [];
-    const match = intents.find((i: any) => i?.moduleId === selected?.moduleId);
-    const lang = typeof match?.language === 'string' ? match.language : '';
-    const labels: Record<string, string> = {
-      cbl: 'COBOL',
-      cob: 'COBOL',
-      java: 'Java',
-      py: 'Python',
-      php: 'PHP',
-      js: 'JavaScript',
-      ts: 'TypeScript',
-      cs: 'C#',
-      vb: 'VB.NET',
-    };
-    return labels[lang] || (lang ? lang.toUpperCase() : 'Legacy');
-  }, [job?.intents, selected?.moduleId]);
 
   const downloadText = (filename: string, content: string) => {
     const blob = new Blob([content], { type: 'text/plain' });
