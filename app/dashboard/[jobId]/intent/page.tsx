@@ -23,6 +23,7 @@ export default function IntentMapPage() {
   const [selectedModule, setSelectedModule] = useState<ModuleIntent | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string>('all');
   const [repoName, setRepoName] = useState<string>('');
+  const [contextExpanded, setContextExpanded] = useState(false);
 
   useEffect(() => {
     document.title = 'Business Intent · LegacyLens';
@@ -90,6 +91,14 @@ export default function IntentMapPage() {
     return `${count} module${count === 1 ? '' : 's'}`;
   }, [intents.length]);
 
+  const confidenceBuckets = useMemo(() => {
+    const high = intents.filter((i) => i.confidence >= 0.8).length;
+    const needsReview = intents.filter((i) => i.confidence >= 0.65 && i.confidence < 0.8).length;
+    const low = intents.filter((i) => i.confidence < 0.65).length;
+    const total = intents.length;
+    return { high, needsReview, low, total };
+  }, [intents]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--background)] px-6 text-[var(--text-primary)]">
@@ -152,6 +161,59 @@ export default function IntentMapPage() {
               <h2 className="text-[2rem] font-normal">Business Intent</h2>
               <div className="font-mono text-[0.875rem] text-[var(--text-muted)] lg:hidden">{String(params.jobId)}</div>
             </div>
+
+            <div className="mb-6 border border-[var(--border)] p-4">
+              <button
+                type="button"
+                onClick={() => setContextExpanded((e) => !e)}
+                className="w-full text-left text-[0.875rem] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                aria-expanded={contextExpanded ? 'true' : 'false'}
+              >
+                What is this? {contextExpanded ? '↑' : '↓'}
+              </button>
+              {contextExpanded ? (
+                <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
+                  The Business Intent Map shows what each module in your codebase
+                  actually does — in plain English, not syntax. Each card represents
+                  one logical unit of code (a function, class, or COBOL paragraph).
+                  <br /><br />
+                  Confidence scores reflect how certain the analysis is. Anything below
+                  65% or touching financial logic, authentication, or data deletion is
+                  flagged for human review — those modules should not be refactored
+                  without a developer reading the original first.
+                  <br /><br />
+                  Click any card to see the full intent description and the raw code
+                  side by side.
+                </p>
+              ) : null}
+            </div>
+
+            {confidenceBuckets.total > 0 ? (
+              <div className="mb-6">
+                <div className="flex h-2 w-full overflow-hidden rounded bg-[var(--border)]" role="img" aria-label="Confidence distribution">
+                  <div
+                    className="bg-[var(--success)]"
+                    style={{ width: `${(confidenceBuckets.high / confidenceBuckets.total) * 100}%` }}
+                    title={`High confidence: ${confidenceBuckets.high}`}
+                  />
+                  <div
+                    className="bg-[var(--warning)]"
+                    style={{ width: `${(confidenceBuckets.needsReview / confidenceBuckets.total) * 100}%` }}
+                    title={`Needs review: ${confidenceBuckets.needsReview}`}
+                  />
+                  <div
+                    className="bg-[var(--danger)]"
+                    style={{ width: `${(confidenceBuckets.low / confidenceBuckets.total) * 100}%` }}
+                    title={`Low confidence: ${confidenceBuckets.low}`}
+                  />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[0.8125rem] text-[var(--text-secondary)]">
+                  <span>High confidence ({confidenceBuckets.high})</span>
+                  <span>Needs review ({confidenceBuckets.needsReview})</span>
+                  <span>Low confidence ({confidenceBuckets.low})</span>
+                </div>
+              </div>
+            ) : null}
 
             <div className="mb-8 flex flex-wrap gap-2">
               {languages.map((lang) => {

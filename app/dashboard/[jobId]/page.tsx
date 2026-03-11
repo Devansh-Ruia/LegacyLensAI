@@ -73,6 +73,23 @@ export default function JobStatusPage() {
     }
   };
 
+  const getStatusExplanation = (status: string) => {
+    switch (status) {
+      case 'ingesting':
+        return 'Reading and chunking your source files by language and logical boundaries.';
+      case 'analyzing':
+        return 'Sending each module to GPT-4o to extract business intent. This takes 1–2 minutes depending on codebase size.';
+      case 'roadmapping':
+        return 'Building the dependency graph and generating the phased migration plan.';
+      case 'complete':
+        return 'Analysis complete. Redirecting to your intent map.';
+      case 'error':
+        return 'Something went wrong. Check that your Azure services are configured and try again.';
+      default:
+        return null;
+    }
+  };
+
   const pipeline = useMemo(() => ([
     { key: 'ingesting', label: 'Ingesting' },
     { key: 'analyzing', label: 'Extracting Intent' },
@@ -182,6 +199,12 @@ export default function JobStatusPage() {
               <div className="mt-2 text-[0.875rem] text-[var(--text-secondary)]">{getStatusText(job.status)}</div>
             </div>
           </div>
+
+          {getStatusExplanation(job.status) ? (
+            <p className="mt-6 text-center text-[0.875rem] text-[var(--text-muted)]">
+              {getStatusExplanation(job.status)}
+            </p>
+          ) : null}
         </div>
       </main>
     </div>

@@ -19,6 +19,7 @@ export default function RoadmapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [repoName, setRepoName] = useState<string>('');
+  const [contextExpanded, setContextExpanded] = useState(false);
 
   useEffect(() => {
     document.title = 'Modernization Roadmap · LegacyLens';
@@ -82,6 +83,24 @@ export default function RoadmapPage() {
     () => roadmap.filter((i) => i.recommendation === 'refactor').length,
     [roadmap]
   );
+
+  const effortByPhase = useMemo(() => {
+    const p1 = phaseItems[1].reduce((s, i) => s + i.effortDays, 0);
+    const p2 = phaseItems[2].reduce((s, i) => s + i.effortDays, 0);
+    const p3 = phaseItems[3].reduce((s, i) => s + i.effortDays, 0);
+    return { 1: p1, 2: p2, 3: p3 } as const;
+  }, [phaseItems]);
+
+  const riskBreakdown = useMemo(() => {
+    const low = roadmap.filter((i) => i.riskLevel === 'low');
+    const medium = roadmap.filter((i) => i.riskLevel === 'medium');
+    const high = roadmap.filter((i) => i.riskLevel === 'high' || i.riskLevel === 'critical');
+    return [
+      { label: 'Low risk', modules: low.length, days: low.reduce((s, i) => s + i.effortDays, 0) },
+      { label: 'Medium risk', modules: medium.length, days: medium.reduce((s, i) => s + i.effortDays, 0) },
+      { label: 'High risk', modules: high.length, days: high.reduce((s, i) => s + i.effortDays, 0) },
+    ];
+  }, [roadmap]);
 
   const exportRoadmapMarkdown = () => {
     const lines: string[] = [];
@@ -191,6 +210,37 @@ export default function RoadmapPage() {
               </button>
             </div>
 
+            <div className="mb-6 border border-[var(--border)] p-4">
+              <button
+                type="button"
+                onClick={() => setContextExpanded((e) => !e)}
+                className="w-full text-left text-[0.875rem] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                aria-expanded={contextExpanded ? 'true' : 'false'}
+              >
+                What is this? {contextExpanded ? '↑' : '↓'}
+              </button>
+              {contextExpanded ? (
+                <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
+                  The Modernization Roadmap is a phased migration plan ranked by risk
+                  and effort. Every recommendation includes a written reason — not just
+                  a score.
+                  <br /><br />
+                  Phase 1 modules are safe to refactor now. They have low risk, no
+                  compliance flags, and minimal dependencies on other modules.
+                  <br /><br />
+                  Phase 2 modules should be refactored after Phase 1 is validated. They
+                  have moderate complexity or dependencies on Phase 1 modules.
+                  <br /><br />
+                  Phase 3 modules require human architectural review before anyone
+                  touches them. They may involve financial calculations, authentication,
+                  data deletion, or compliance logic.
+                  <br /><br />
+                  Click Refactor → on any Phase 1 or Phase 2 module to generate
+                  modernized code with a test scaffold.
+                </p>
+              ) : null}
+            </div>
+
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
               <section>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -264,6 +314,42 @@ export default function RoadmapPage() {
                     <div className="font-mono text-[2rem] leading-none text-[var(--text-primary)]">{refactorableNow}</div>
                     <div className="mt-2 text-[0.875rem] text-[var(--text-muted)]">refactorable now</div>
                   </div>
+
+                  {totalEffort > 0 ? (
+                    <>
+                      <div className="space-y-3">
+                        <p className="text-[0.75rem] uppercase tracking-[0.06em] text-[var(--text-muted)]">Effort by phase</p>
+                        {([1, 2, 3] as const).map((phase) => (
+                          <div key={phase}>
+                            <div className="mb-1 flex justify-between gap-2 text-[0.8125rem] text-[var(--text-secondary)]">
+                              <span>Phase {phase}</span>
+                              <span className="font-mono">{effortByPhase[phase]} days</span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded bg-[var(--border)]">
+                              <div
+                                className={`h-full ${phase === 1 ? 'bg-[var(--phase-1)]' : phase === 2 ? 'bg-[var(--phase-2)]' : 'bg-[var(--phase-3)]'}`}
+                                style={{ width: `${totalEffort ? (effortByPhase[phase] / totalEffort) * 100 : 0}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-[var(--border)] pt-4">
+                        <p className="mb-2 text-[0.75rem] uppercase tracking-[0.06em] text-[var(--text-muted)]">Risk breakdown</p>
+                        <table className="w-full font-mono text-[0.8125rem] text-[var(--text-secondary)]">
+                          <tbody>
+                            {riskBreakdown.map((row) => (
+                              <tr key={row.label} className="border-b border-[var(--border)] last:border-0">
+                                <td className="py-1">{row.label}</td>
+                                <td className="py-1 text-right">{row.modules} module{row.modules !== 1 ? 's' : ''}</td>
+                                <td className="py-1 text-right">{row.days} days</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </aside>
             </div>

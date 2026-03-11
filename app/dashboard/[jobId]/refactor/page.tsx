@@ -24,6 +24,7 @@ export default function RefactorPage() {
   const [isRefactoring, setIsRefactoring] = useState(false);
   const [showTests, setShowTests] = useState(false);
   const [repoName, setRepoName] = useState<string>('');
+  const [contextExpanded, setContextExpanded] = useState(false);
 
   const moduleId = searchParams.get('module');
 
@@ -196,6 +197,45 @@ export default function RefactorPage() {
               <div className="font-mono text-[0.875rem] text-[var(--text-muted)] lg:hidden">{String(params.jobId)}</div>
             </div>
 
+            <div className="mb-6 border border-[var(--border)] p-4">
+              <button
+                type="button"
+                onClick={() => setContextExpanded((e) => !e)}
+                className="w-full text-left text-[0.875rem] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                aria-expanded={contextExpanded ? 'true' : 'false'}
+              >
+                What is this? {contextExpanded ? '↑' : '↓'}
+              </button>
+              {contextExpanded ? (
+                <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
+                  The Refactor view shows modernized versions of your legacy code.
+                  Each refactored module was generated using the original business
+                  intent description as a guardrail — so the output can&apos;t silently
+                  change what the code was supposed to do.
+                  <br /><br />
+                  Guardrail Active means a second AI pass compared the refactored
+                  output against the original intent and found no semantic drift.
+                  <br /><br />
+                  If drift is detected, a warning appears above the code. The
+                  refactored code is still shown — but it should be reviewed before
+                  use.
+                  <br /><br />
+                  Test stubs are generated for every refactored module. They include
+                  a happy path test and edge cases inferred from the business intent.
+                </p>
+              ) : null}
+            </div>
+
+            {refactoredModules.length > 0 ? (
+              <p className="mb-6 text-[0.875rem] text-[var(--text-muted)]">
+                {refactoredModules.length} modules refactored
+                {' · '}
+                {refactoredModules.filter((m) => m.guardrailMode).length} with guardrail active
+                {' · '}
+                {refactoredModules.filter((m) => !m.guardrailMode).length} drift warnings
+              </p>
+            ) : null}
+
             {moduleId ? (
               <div className="mb-8 border border-[var(--border)] bg-[var(--surface)] p-6">
                 <div className="flex items-center justify-between gap-4">
@@ -277,10 +317,17 @@ export default function RefactorPage() {
               </div>
             ) : (
               <div className="border border-[var(--border)] bg-[var(--surface)] p-6 text-[0.9375rem] text-[var(--text-secondary)]">
-                <p className="mb-1">No refactored modules yet.</p>
-                <p className="text-[0.875rem] text-[var(--text-muted)]">
-                  Go to the Roadmap and click Refactor → on a Phase 1 or Phase 2 module to get started.
+                <p className="mb-2">No refactored modules yet.</p>
+                <p className="mb-4 text-[0.875rem] leading-[1.6] text-[var(--text-muted)]">
+                  Go to the Roadmap and click Refactor → on any Phase 1 or
+                  Phase 2 module to generate modernized code here.
                 </p>
+                <a
+                  href={`/dashboard/${params.jobId}/roadmap`}
+                  className="text-[0.875rem] text-[var(--accent)] underline-offset-4 hover:underline"
+                >
+                  → Go to Roadmap
+                </a>
               </div>
             )}
 
