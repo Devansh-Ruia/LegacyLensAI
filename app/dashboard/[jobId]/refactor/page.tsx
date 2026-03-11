@@ -98,9 +98,10 @@ export default function RefactorPage() {
       const result = await response.json();
 
       if (response.ok) {
-        const updatedModules = refactoredModules.filter(m => m.moduleId !== moduleId);
-        setRefactoredModules([...updatedModules, result]);
-        setSelectedModule(result);
+        const updatedModules = refactoredModules.filter((m) => m.moduleId !== moduleId);
+        const newModule = result.refactoredModule || result;
+        setRefactoredModules([...updatedModules, newModule]);
+        setSelectedModule(newModule);
       } else {
         throw new Error(result.error || 'Refactoring failed');
       }
@@ -143,6 +144,10 @@ export default function RefactorPage() {
   }
 
   const selected = selectedModule || (refactoredModules.length > 0 ? refactoredModules[0] : null);
+
+  const cleanedTestScaffold = selected
+    ? selected.testScaffold.replace(/```[\w]*\n?/g, '').trim()
+    : '';
 
   const downloadText = (filename: string, content: string) => {
     const blob = new Blob([content], { type: 'text/plain' });
@@ -269,7 +274,10 @@ export default function RefactorPage() {
               </div>
             ) : (
               <div className="border border-[var(--border)] bg-[var(--surface)] p-6 text-[0.9375rem] text-[var(--text-secondary)]">
-                No refactored modules yet.
+                <p className="mb-1">No refactored modules yet.</p>
+                <p className="text-[0.875rem] text-[var(--text-muted)]">
+                  Go to the Roadmap and click Refactor → on a Phase 1 or Phase 2 module to get started.
+                </p>
               </div>
             )}
 
@@ -323,7 +331,7 @@ export default function RefactorPage() {
                   <span className="text-[var(--text-muted)]">·</span>
                   <button
                     type="button"
-                    onClick={() => downloadText(`${selected.moduleId}_test.txt`, selected.testScaffold)}
+                    onClick={() => downloadText(`${selected.moduleId}_test.txt`, cleanedTestScaffold)}
                     className="text-[var(--accent)] underline-offset-4 hover:underline transition-colors duration-150"
                     aria-label="Download test scaffold"
                   >
@@ -347,7 +355,7 @@ export default function RefactorPage() {
                         Test scaffold
                       </div>
                       <pre className="max-h-[420px] overflow-auto p-6 font-mono text-[0.875rem] leading-[1.6] text-[var(--text-secondary)] [scrollbar-width:thin]">
-                        <code>{selected.testScaffold}</code>
+                        <code>{cleanedTestScaffold}</code>
                       </pre>
                     </div>
                   ) : null}

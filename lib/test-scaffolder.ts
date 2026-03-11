@@ -34,8 +34,9 @@ Generate comprehensive pytest tests for this refactored module.`;
 
   try {
     const testContent = await callGPT4o(systemPrompt, userPrompt);
-    
-    return testContent;
+    const cleanedTestContent = testContent.replace(/```[\w]*\n?/g, '').trim();
+
+    return cleanedTestContent;
   } catch (error: any) {
     console.error('Test scaffold generation failed:', error);
     

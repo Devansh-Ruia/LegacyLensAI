@@ -133,10 +133,7 @@ ${moduleIntent.rawCode}`;
       
       return NextResponse.json({
         success: true,
-        moduleId,
-        targetLanguage,
-        refactoredCode,
-        testScaffold,
+        refactoredModule,
         driftWarning,
         relatedModules: relatedModules.length
       });
