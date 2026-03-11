@@ -222,7 +222,7 @@ export default function RoadmapPage() {
               {contextExpanded ? (
                 <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
                   The Modernization Roadmap is a phased migration plan ranked by risk
-                  and effort. Every recommendation includes a written reason — not just
+                  and effort. Every recommendation includes a written reason, not just
                   a score.
                   <br /><br />
                   Phase 1 modules are safe to refactor now. They have low risk, no

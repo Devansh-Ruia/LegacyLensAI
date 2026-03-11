@@ -174,12 +174,12 @@ export default function IntentMapPage() {
               {contextExpanded ? (
                 <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
                   The Business Intent Map shows what each module in your codebase
-                  actually does — in plain English, not syntax. Each card represents
+                  actually does, in plain English, not syntax. Each card represents
                   one logical unit of code (a function, class, or COBOL paragraph).
                   <br /><br />
                   Confidence scores reflect how certain the analysis is. Anything below
                   65% or touching financial logic, authentication, or data deletion is
-                  flagged for human review — those modules should not be refactored
+                  flagged for human review, those modules should not be refactored
                   without a developer reading the original first.
                   <br /><br />
                   Click any card to see the full intent description and the raw code

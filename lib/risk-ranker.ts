@@ -19,7 +19,7 @@ export async function generateRoadmap(
   try {
     console.log(`Generating roadmap for job ${jobId} with ${intents.length} modules`);
     
-    // Step 1 — build a lightweight dependency summary
+    // Step 1: build a lightweight dependency summary
     const dependencySummary: string[] = [];
     
     for (const intent of intents) {
@@ -39,7 +39,7 @@ export async function generateRoadmap(
       }
     }
     
-    // Step 2 — GPT-4o roadmap call
+    // Step 2: GPT-4o roadmap call
     const systemPrompt = `You are a software modernization architect. Given a list of modules with their 
 inferred business intent and dependency relationships, produce a phased 
 migration roadmap.

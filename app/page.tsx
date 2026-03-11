@@ -12,7 +12,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    document.title = 'LegacyLens — Legacy Code Modernization';
+    document.title = 'LegacyLens: Legacy Code Modernization';
   }, []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +105,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-6 max-w-[40ch] text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
-                Drop in a repository and get back a plain-English account of what the business logic actually does —
+                Drop in a repository and get back a plain-English account of what the business logic actually does,
                 plus a risk-ranked plan for what to modernize first.
               </p>
 
@@ -199,7 +199,7 @@ export default function Home() {
               system actually does. Documentation is missing. The people who wrote it are
               gone. The business logic is buried in functions called ProcessData2_FINAL.
               <br /><br />
-              LegacyLens reads the code and writes that documentation for you — then tells
+              LegacyLens reads the code and writes that documentation for you, then tells
               you what&apos;s safe to change first.
             </p>
           </div>
@@ -210,7 +210,7 @@ export default function Home() {
               <p className="mt-2 text-[1.125rem] font-medium text-[var(--text-primary)]">Understand</p>
               <p className="mt-2 text-[0.9375rem] font-medium text-[var(--text-primary)]">What does this code actually do?</p>
               <p className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
-                LegacyLens reads every function, paragraph, and class and writes a plain-English description of the business logic — not the syntax. Each description gets a confidence score. Anything touching financial calculations, authentication, or compliance gets flagged for human review before anyone touches it.
+                LegacyLens reads every function, paragraph, and class and writes a plain-English description of the business logic, not the syntax. Each description gets a confidence score. Anything touching financial calculations, authentication, or compliance gets flagged for human review before anyone touches it.
               </p>
             </div>
             <div className="border-b border-[var(--border)] px-6 py-8 sm:border-b-0 sm:border-r sm:py-0">
@@ -218,7 +218,7 @@ export default function Home() {
               <p className="mt-2 text-[1.125rem] font-medium text-[var(--text-primary)]">Plan</p>
               <p className="mt-2 text-[0.9375rem] font-medium text-[var(--text-primary)]">What should we change first?</p>
               <p className="mt-3 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
-                From the intent map, LegacyLens builds a phased migration roadmap ranked by risk and effort. Every recommendation includes a written reason — the kind of artifact you can put in front of leadership, not just another scan report.
+                From the intent map, LegacyLens builds a phased migration roadmap ranked by risk and effort. Every recommendation includes a written reason, the kind of artifact you can put in front of leadership, not just another scan report.
               </p>
             </div>
             <div className="px-6 py-8 sm:py-0">
@@ -266,7 +266,7 @@ export default function Home() {
                 Upload a repo. Get a roadmap in minutes.
               </h3>
               <p className="mt-4 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
-                You don&apos;t need to configure anything. Drop in a ZIP of your codebase or paste a GitHub URL. LegacyLens handles the rest — chunking the files, extracting intent, building the dependency graph, and generating the roadmap.
+                You don&apos;t need to configure anything. Drop in a ZIP of your codebase or paste a GitHub URL. LegacyLens handles the rest: chunking the files, extracting intent, building the dependency graph, and generating the roadmap.
               </p>
               <div className="mt-6 space-y-2 text-[0.9375rem] leading-[1.6] text-[var(--text-secondary)]">
                 <p>Upload a ZIP file or paste a public GitHub repo URL.</p>

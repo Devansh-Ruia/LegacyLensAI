@@ -15,7 +15,7 @@ interface IntentExtractionResult {
 
 export async function extractIntent(chunk: ModuleIntent): Promise<ModuleIntent> {
   const systemPrompt = `You are a senior software architect specializing in legacy system analysis.
-Your job is to infer the BUSINESS INTENT of the following code — not what it 
+Your job is to infer the BUSINESS INTENT of the following code, not what it 
 does syntactically, but what business problem it is solving.
 
 Respond with a JSON object containing exactly these fields:

@@ -210,14 +210,14 @@ export default function RefactorPage() {
                 <p className="mt-3 text-[0.875rem] leading-[1.6] text-[var(--text-secondary)]">
                   The Refactor view shows modernized versions of your legacy code.
                   Each refactored module was generated using the original business
-                  intent description as a guardrail — so the output can&apos;t silently
+                  intent description as a guardrail, so the output can&apos;t silently
                   change what the code was supposed to do.
                   <br /><br />
                   Guardrail Active means a second AI pass compared the refactored
                   output against the original intent and found no semantic drift.
                   <br /><br />
                   If drift is detected, a warning appears above the code. The
-                  refactored code is still shown — but it should be reviewed before
+                  refactored code is still shown, but it should be reviewed before
                   use.
                   <br /><br />
                   Test stubs are generated for every refactored module. They include
