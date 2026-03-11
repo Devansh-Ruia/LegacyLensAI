@@ -34,7 +34,10 @@ Generate comprehensive pytest tests for this refactored module.`;
 
   try {
     const testContent = await callGPT4o(systemPrompt, userPrompt);
-    const cleanedTestContent = testContent.replace(/```[\w]*\n?/g, '').trim();
+    const cleanedTestContent = testContent
+      .replace(/```[\w]*\n?/g, '')
+      .replace(/\n?```\s*$/g, '')
+      .trim();
 
     return cleanedTestContent;
   } catch (error: any) {

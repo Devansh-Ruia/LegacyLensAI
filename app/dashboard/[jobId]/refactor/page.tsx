@@ -146,7 +146,10 @@ export default function RefactorPage() {
   const selected = selectedModule || (refactoredModules.length > 0 ? refactoredModules[0] : null);
 
   const cleanedTestScaffold = selected
-    ? selected.testScaffold.replace(/```[\w]*\n?/g, '').trim()
+    ? selected.testScaffold
+        .replace(/```[\w]*\n?/g, '')
+        .replace(/\n?```\s*$/g, '')
+        .trim()
     : '';
 
   const downloadText = (filename: string, content: string) => {
@@ -331,7 +334,7 @@ export default function RefactorPage() {
                   <span className="text-[var(--text-muted)]">·</span>
                   <button
                     type="button"
-                    onClick={() => downloadText(`${selected.moduleId}_test.txt`, cleanedTestScaffold)}
+                    onClick={() => downloadText(`${selected.moduleId.length >= 11 ? selected.moduleId.slice(11) : selected.moduleId}_test.py`, cleanedTestScaffold)}
                     className="text-[var(--accent)] underline-offset-4 hover:underline transition-colors duration-150"
                     aria-label="Download test scaffold"
                   >
