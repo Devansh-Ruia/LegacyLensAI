@@ -25,6 +25,7 @@ export default function RefactorPage() {
   const [showTests, setShowTests] = useState(false);
   const [repoName, setRepoName] = useState<string>('');
   const [contextExpanded, setContextExpanded] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState('python');
 
   const moduleId = searchParams.get('module');
 
@@ -251,9 +252,13 @@ export default function RefactorPage() {
                       Target language
                     </label>
                     <select
-                      defaultValue="python"
-                      onChange={(e) => handleRefactor(moduleId, e.target.value)}
-                      className="mt-2 w-full border border-[var(--border)] bg-transparent px-3 py-3 text-[0.9375rem] text-[var(--text-primary)] focus:outline-none"
+                      value={targetLanguage}
+                      onChange={(e) => {
+                        setTargetLanguage(e.target.value);
+                        handleRefactor(moduleId, e.target.value);
+                      }}
+                      className="w-full bg-[#161616] text-[#f0ede8] border border-[#2a2a2a] px-4 py-3 font-mono text-sm appearance-none cursor-pointer focus:outline-none focus:border-[#c8b99a]"
+                      style={{ colorScheme: 'dark' }}
                       disabled={isRefactoring}
                       aria-label="Target programming language"
                     >
