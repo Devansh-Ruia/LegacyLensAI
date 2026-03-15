@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { extractIntentsInBatches } from '@/lib/intent-extractor';
 import { indexModule, getAllModulesForJob } from '@/lib/azure-search';
 import { updateJobStatus, getJob } from '@/lib/blob-storage';
+import { generateRoadmap } from '@/lib/risk-ranker';
 import { ModuleIntent } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -50,20 +51,18 @@ export async function POST(request: NextRequest) {
       
       console.log(`Indexed ${indexedCount}/${processedIntents.length} modules for job ${jobId}`);
       
-      // Update job with processed intents and trigger roadmap generation
+      // Update job with processed intents and generate roadmap
       await updateJobStatus(jobId, 'roadmapping', {
         intents: processedIntents,
         processedModules: processedIntents.length
       });
       
-      // Trigger roadmap generation asynchronously
-      const baseUrl = new URL(request.url).origin;
-      fetch(`${baseUrl}/api/roadmap`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId })
-      }).catch(error => {
-        console.error('Failed to trigger roadmap generation:', error);
+      // Generate roadmap directly instead of fetching /api/roadmap
+      const roadmap = await generateRoadmap(jobId, processedIntents);
+
+      await updateJobStatus(jobId, 'complete', {
+        roadmap,
+        processedModules: processedIntents.length
       });
       
       return NextResponse.json({
@@ -71,7 +70,8 @@ export async function POST(request: NextRequest) {
         jobId,
         totalModules: processedIntents.length,
         indexedModules: indexedCount,
-        status: 'roadmapping'
+        status: 'complete',
+        roadmapItems: roadmap.length
       });
       
     } catch (error: any) {
